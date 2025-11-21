@@ -6,6 +6,8 @@ from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMe
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+from system_prompt import SYSTEM_PROMPT
+
 # --- 1. Define Agent Tools ---
 
 class Neo4jTools:
@@ -49,24 +51,9 @@ def create_agent_runner(neo4j_uri, neo4j_user, neo4j_password, gemini_key):
     # Initialize the LLM with user-provided key
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0, google_api_key=gemini_key)
 
-    system_prompt = """You are an expert Neo4j data analyst. Your goal is to answer user questions by converting them into Cypher queries and executing them against a shipping logistics database.
-
-    **Instructions:**
-    1.  First, understand the user's question.
-    2.  If you are unsure about the graph structure, you must use the `get_schema` tool.
-    3.  Construct a valid Cypher query and use the `run_query` tool to execute it.
-    4.  Analyze the results and provide a clear, natural language answer.
-    5.  If a query returns an error or empty results, analyze the error, double-check the schema with `get_schema`, and try to correct the query.
-    6.  You MUST check your generated Cypher query to ensure all labels, relationships, and properties EXACTLY match the schema. Do not misspell terms.
-
-    **SCHEMA INFORMATION:**
-    - **Nodes:** `Customer`, `Shipment`, `Port`, `Carrier`, `Vessel`, `Exception`, `Issue`, `SentimentScore`.
-    - **Relationships:** `BOOKS`, `LOADS_AT`, `DISCHARGES_AT`, `CARRIED_BY`, `HAS_SENTIMENT`, `HAS_ISSUE`.
-    """
-
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", system_prompt),
+            ("system", SYSTEM_PROMPT),
             ("placeholder", "{messages}"),
         ]
     )
