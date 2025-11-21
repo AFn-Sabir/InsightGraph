@@ -218,14 +218,14 @@ You MUST verify all Cypher queries match this exact schema. When uncertain about
 </critical_note>
 
 <nodes>
-- Customer {name: string, ...}
-- Shipment {id: string, etd: string, eta: string, sentiment_analysis: string, ...}
-- Port {name: string, ...}
-- Carrier {name: string, ...}
-- Vessel {name: string, ...}
-- Exception {type: string, ...}
-- Issue {type: string, ...}
-- SentimentScore {score: string, ...} -- Common values: "Positive", "Neutral", "Negative"
+- Customer {{name: string, ...}}
+- Shipment {{id: string, etd: string, eta: string, sentiment_analysis: string, ...}}
+- Port {{name: string, ...}}
+- Carrier {{name: string, ...}}
+- Vessel {{name: string, ...}}
+- Exception {{type: string, ...}}
+- Issue {{type: string, ...}}
+- SentimentScore {{score: string, ...}} -- Common values: "Positive", "Neutral", "Negative"
 </nodes>
 
 <relationships>
@@ -234,7 +234,7 @@ You MUST verify all Cypher queries match this exact schema. When uncertain about
 - (Shipment)-[:DISCHARGES_AT]->(Port)
 - (Shipment)-[:CARRIED_BY]->(Carrier)
 - (Shipment)-[:HAS_SENTIMENT]->(SentimentScore)
-- (Shipment)-[:HAS_ISSUE {issue: string, explanation: string, raised_by: string, ...}]->(Issue)
+- (Shipment)-[:HAS_ISSUE {{issue: string, explanation: string, raised_by: string, ...}}]->(Issue)
 - Additional relationships may exist - use get_schema to discover
 </relationships>
 
@@ -315,7 +315,7 @@ Use WITH clauses for complex calculations:
 ```cypher
 MATCH (c:Customer)-[:BOOKS]->(s:Shipment)
 WITH c, count(s) as total_shipments
-MATCH (c)-[:BOOKS]->(s)-[:HAS_SENTIMENT]->(ss:SentimentScore {score: 'Negative'})
+MATCH (c)-[:BOOKS]->(s)-[:HAS_SENTIMENT]->(ss:SentimentScore {{score: 'Negative'}})
 WITH c, total_shipments, count(s) as negative_shipments
 RETURN c.name, total_shipments, negative_shipments,
        round(toFloat(negative_shipments) / total_shipments * 100, 2) as negative_percentage
@@ -590,7 +590,7 @@ RETURN count(DISTINCT s) as total_shipments
 <query_sequence>
 Query 1 - Get customers ranked by negative sentiment:
 ```cypher
-MATCH (c:Customer)-[:BOOKS]->(s:Shipment)-[:HAS_SENTIMENT]->(ss:SentimentScore {score: 'Negative'})
+MATCH (c:Customer)-[:BOOKS]->(s:Shipment)-[:HAS_SENTIMENT]->(ss:SentimentScore {{score: 'Negative'}})
 WITH c, count(DISTINCT s) as negative_shipments
 MATCH (c)-[:BOOKS]->(s_all:Shipment)
 WITH c, negative_shipments, count(DISTINCT s_all) as total_shipments
@@ -604,7 +604,7 @@ LIMIT 10
 
 Query 2 (if deeper analysis needed) - Get issues for top customer:
 ```cypher
-MATCH (c:Customer {name: 'Customer X'})-[:BOOKS]->(s:Shipment)-[:HAS_SENTIMENT]->(ss:SentimentScore {score: 'Negative'})
+MATCH (c:Customer {{name: 'Customer X'}})-[:BOOKS]->(s:Shipment)-[:HAS_SENTIMENT]->(ss:SentimentScore {{score: 'Negative'}})
 MATCH (s)-[:HAS_ISSUE]->(i:Issue)
 RETURN i.type as issue_type, count(DISTINCT s) as occurrence_count
 ORDER BY occurrence_count DESC
@@ -689,8 +689,8 @@ MATCH (s:Shipment)-[:LOADS_AT]->(origin:Port),
 WITH origin.name as origin_port,
      dest.name as destination_port,
      count(DISTINCT s) as shipments_with_issues
-MATCH (s2:Shipment)-[:LOADS_AT]->(o2:Port {name: origin_port}),
-      (s2)-[:DISCHARGES_AT]->(d2:Port {name: destination_port})
+MATCH (s2:Shipment)-[:LOADS_AT]->(o2:Port {{name: origin_port}}),
+      (s2)-[:DISCHARGES_AT]->(d2:Port {{name: destination_port}})
 WITH origin_port, destination_port, shipments_with_issues, count(DISTINCT s2) as total_shipments
 RETURN origin_port,
        destination_port,
